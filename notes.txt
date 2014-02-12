@@ -1,0 +1,59 @@
+Feb 12 ------------------------------------------------------------------------
+  Completed:
+    - lemmatize (stemming) to get root form of a word --> wordnet should do this
+      - from nltk.stem.wordnet import WordNetLemmatizer
+        lmtzr = WordNetLemmatizer()
+    - function to compare all combinations of synsets (couldn't find pre-written one)
+      - compares all synsets for a word from sentence 1 to all synsets of all words in sentence 2. saves max score
+      - returns average max score (sum of max scores/number of words in s1)
+    - function to find sim score between the first sense of 
+
+  Mention:
+    - skip meeting next week?
+
+  TODO:
+    - compound words, consider as a whole not parts -> check each sentence against compound word list in wordnet
+    - ignore prepositions and pronouns and punctuation (stoplist)
+    - normalize scores
+    - lesk
+    - make repo
+
+
+Feb 05 ------------------------------------------------------------------------
+
+Questions:
+  -difference between what I am doing and SEMILAR (http://www.semanticsimilarity.org/) and TakeLab (http://aclweb.org/anthology//S/S12/S12-1060.pdf)
+
+  -group all nouns together? ie NN, NNS, NNP, NNPS
+    YES
+  -stop words? ignore all prepositions, pronouns, punctuation
+
+  Proposed TODO for next week: generate sentence similarity scores from wordnet similarity scores
+  - normalize?
+
+Meeting:
+  -lesk
+  -can just use 1st sense since it's the most frequent
+  -or can consider all of them and take max similarity (lean towards this)
+    -see if a function already exists that will give word similairty instead of sense similarity (ie consider all synsets of a word)
+  -ignore prepositions and pronouns and punctuation (stoplist)
+  -lemmatize (stemming) to get root form of a word --> wordnet should do this
+  -compound words, consider as a whole not parts -> check each sentence against compound word list in wordnet
+  -make repo in cs.toronto.edu
+
+Jan 29 ------------------------------------------------------------------------
+
+Meeting:
+
+  Use word similarity (all words, all verbs, all nouns) to generate sentence similarity scores.
+  ignore stop words ()
+
+  **lsa least semantic analysis measure using GENSIM
+
+  Part of speech tagging (Stanford parser)
+
+  Normalize scores 
+
+  Can't use path measures for verbs to noun. >> vector, lesk work
+
+  try using all similarity measures on V-V, N-N, and overall
