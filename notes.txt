@@ -1,3 +1,16 @@
+Feb 25 -----------------------------------------------------------------------
+  Completed:
+    - ignore prepositions and pronouns and punctuation (stoplist)
+      - def remove_stopwords, called from tag() which does all the POS tagging
+    - compound words, consider as a whole not parts -> check each sentence against compound word list in wordnet
+    - normalize scores (started, not completely done)
+
+  TODO:
+    - LSA scores
+    - lesk
+    - make repo
+
+
 Feb 12 ------------------------------------------------------------------------
   Completed:
     - lemmatize (stemming) to get root form of a word --> wordnet should do this
@@ -10,13 +23,23 @@ Feb 12 ------------------------------------------------------------------------
 
   Mention:
     - skip meeting next week?
+    - difference in number of tokens being compared
 
   TODO:
+    - normalize scores
+    - LSA scores
     - compound words, consider as a whole not parts -> check each sentence against compound word list in wordnet
     - ignore prepositions and pronouns and punctuation (stoplist)
-    - normalize scores
     - lesk
     - make repo
+
+  meeting notes:
+    def tag:
+      - does stnaford tagger need tokenized words?
+      - splitta tokenizer
+
+    - add adverbs, adjectives
+    - VerbNet??
 
 
 Feb 05 ------------------------------------------------------------------------

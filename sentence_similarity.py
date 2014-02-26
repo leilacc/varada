@@ -24,6 +24,11 @@ SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin']
 PARTS_OF_SPEECH = { wn.NOUN: ['NN', 'NNS', 'NNP', 'NNPS'],
                     wn.VERB: ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ'],
                   }
+# Pronoun tags are PRP, PRP$, WP, WP$
+# IN is the tag for prepositions or subordinating conjunctions
+# Remaining tags refer to punctuation
+STOPWORD_TAGS = ['PRP', 'PRP$', 'WP', 'WP$', 'IN', '#', '$', '"', "(", ")", ",",
+                 '.', ':', '``', '\'\'']
 
 
 def similarity(synset1, synset2, measure):
@@ -49,16 +54,56 @@ def similarity(synset1, synset2, measure):
     return getattr(synset1, similarity_function)(synset2)
 
 def tag(sentence):
-  '''Tags a sentence with its parts of speech.
+  '''Tags a sentence with its parts of speech. Removes stop words.
 
   Args:
     sentence: A string. The sentence whose parts of speech will be tagged.
 
   Returns:
     The same sentence, but as a list of tuples with its parts of speech tagged.
+    Stop words are removed.
     eg [('hello', 'UH'), ('how', 'WRB'), ('are', 'VBP'), ('you', 'PRP')]
   '''
-  return TAGGER.tag(nltk.word_tokenize(sentence))
+  tagged_sentence = TAGGER.tag(nltk.word_tokenize(sentence))
+  return remove_stopwords(tagged_sentence)
+
+def find_compound_words(sentence):
+  '''Identifies compound words in sentence.
+  
+  Args:
+    sentence: A string.
+    
+  Returns:
+    TODO
+  '''
+  # For each word, iteratively add on the words that follow to see if together
+  # they form a compound word with a WordNet synset.
+  sentence = sentence.split()
+  for i, word in enumerate(sentence):
+    test_compound_word = word
+    for j in range(i + 1, len(sentence)):
+      test_compound_word += ('_' + sentence[j])
+      if wn.synsets(test_compound_word):
+        print wn.synsets(test_compound_word).pos
+
+def remove_stopwords(tagged_sentence):
+  '''Removes stopwords from a part-of-speech tagged_sentence.
+  Pronouns, prepositions, and punctuation are considered stopwords.
+
+  Args:
+    tagged_sentence: A list of tuples of strings. Each tuple is of form
+      (word, tag)
+
+  Returns:
+    The list, but without any tuples containing stop words.
+  '''
+  sentence_without_stopwords = []
+  for word in tagged_sentence:
+    tag = word[1]
+    if tag not in STOPWORD_TAGS:
+      sentence_without_stopwords.append(word)
+
+  return sentence_without_stopwords
 
 def get_pos(sentence, parts_of_speech):
   '''Returns the tokens in sentence that have a match in parts_of_speech.
@@ -131,8 +176,8 @@ def avg_max_similarity(s1_synsets, s2_synsets, measure):
   return 0 if not s1_synsets else float(total_sim_score)/len(s1_synsets)
   
 def first_sense_similarity(s1_synsets, s2_synsets, measure):
-  '''Returns the similarity score between the first senses of the synsets in
-  s1_synsets and s2_synsets.
+  '''Returns the average of the max similarity scores between the first sense
+  of each list of synsets in s1_synsets and s2_synsets.
 
   Args:
     s1_synsets: A list of lists of synsets.
@@ -184,9 +229,9 @@ def lemmatize(tokens, part_of_speech):
   print 'Lemmatized tokens: %s' % str(lemmatized_words)
   return lemmatized_words
 
-def process_sentence(sentence, part_of_speech):
-  '''Processes the string sentence into a list of synsets of its words that
-  match part_of_speech.
+def sentence_to_synset(sentence, part_of_speech):
+  '''Processes the string sentence into a list of lists of synsets of its words
+  that match part_of_speech.
 
   Args:
     sentence: A sentence in string form.
@@ -216,8 +261,8 @@ def wordnet_similarity(s1, s2, part_of_speech, avg_max=True):
     avg_max: If True, will print the average maximum similarity score.
       Otherwise, will print the first sense similarity score. 
   '''
-  s1_synsets = process_sentence(s1, part_of_speech)
-  s2_synsets = process_sentence(s2, part_of_speech)
+  s1_synsets = sentence_to_synset(s1, part_of_speech)
+  s2_synsets = sentence_to_synset(s2, part_of_speech)
 
   for measure in SIMILARITY_MEASURES:
     if avg_max:
@@ -242,9 +287,9 @@ def compare_sentences(sentence_group):
       print 'Anaphor: %s' % anaphor
       print 'Antecedent: %s' % sentence
       print 'NOUNS ----------------------'
-      wordnet_similarity(anaphor, sentence, wn.NOUN)
+      wordnet_similarity(anaphor, sentence, wn.NOUN, False)
       print 'VERBS ----------------------'
-      wordnet_similarity(anaphor, sentence, wn.VERB)
+      wordnet_similarity(anaphor, sentence, wn.VERB, False)
       print '------------------------------------------------------------------'
 
 if __name__ == '__main__':
@@ -257,6 +302,9 @@ if __name__ == '__main__':
   #print '***'
   #print wordnet_similarity('greetings how are you', 'Hi are you ok?', wn.VERB)
 
-  candidate_source = util.load_pickle('candidate_source.dump')
-  compare_sentences(candidate_source['1'])
+ # candidate_source = util.load_pickle('candidate_source.dump')
+ # compare_sentences(candidate_source['1'])
 
+  #print tag('He said, "hi!" by about')
+  find_compound_words('That red tape at the statue of liberty')
+  #print wn.synsets('red_tape')
