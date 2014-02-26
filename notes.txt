@@ -2,13 +2,19 @@ Feb 25 -----------------------------------------------------------------------
   Completed:
     - ignore prepositions and pronouns and punctuation (stoplist)
       - def remove_stopwords, called from tag() which does all the POS tagging
-    - compound words, consider as a whole not parts -> check each sentence against compound word list in wordnet
+
+    - compound words, consider as a whole not parts
+      - def find_compound_words
+
     - normalize scores (started, not completely done)
 
   TODO:
     - LSA scores
     - lesk
     - make repo
+
+  meeting notes:
+    -
 
 
 Feb 12 ------------------------------------------------------------------------
