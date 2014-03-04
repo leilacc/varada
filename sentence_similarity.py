@@ -22,8 +22,8 @@ TAGGER = POSTagger('/Users/Leila/Downloads/stanford-postagger/models/'
 
 SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin']
 
-PARTS_OF_SPEECH = { wn.NOUN: ['NN', 'NNS', 'NNP', 'NNPS'],
-                    wn.VERB: ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ'],
+PARTS_OF_SPEECH = { wn.NOUN: ['NN', 'NNS', 'NNP', 'NNPS', 'n'],
+                    wn.VERB: ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'v'],
                   }
 # Pronoun tags are PRP, PRP$, WP, WP$
 # IN is the tag for prepositions or subordinating conjunctions
@@ -67,7 +67,7 @@ def tag(sentence):
     eg [('hello', 'UH'), ('how', 'WRB'), ('are', 'VBP'), ('you', 'PRP')]
   '''
   tagged_sentence = TAGGER.tag(nltk.word_tokenize(sentence))
-  print "Original tagged sentence:\n%s" % tagged_sentence
+#  print "Original tagged sentence:\n%s" % tagged_sentence
   tagged_sentence = combine_compound_words(tagged_sentence, sentence)
   return remove_stopwords(tagged_sentence)
 
@@ -95,17 +95,6 @@ def combine_compound_words(tagged_sentence, sentence):
 
   return tagged_sentence
 
-def split_into_words(sentence):
-  '''Splits sentence into a list of words without punctuation.
-
-  Args:
-    sentence: A string
-
-  Returns:
-    A list of the words in sentence, with all punctuation removed.
-  '''
-  return "".join([i for i in sentence if i not in string.punctuation]).split()
-
 def find_compound_words(sentence):
   '''Identifies compound words in sentence.
   
@@ -132,6 +121,17 @@ def find_compound_words(sentence):
           compound_words.append((i, j, synset))
   
   return compound_words
+
+def split_into_words(sentence):
+  '''Splits sentence into a list of words without punctuation.
+
+  Args:
+    sentence: A string
+
+  Returns:
+    A list of the words in sentence, with all punctuation removed.
+  '''
+  return "".join([i for i in sentence if i not in string.punctuation]).split()
 
 def remove_individual_compound_words(constituent_words, tagged_sentence):
   '''Removes the individual words in tagged_sentence that are constituent words
@@ -346,12 +346,17 @@ def wordnet_similarity(s1, s2, part_of_speech, avg_max=True):
   s1_synsets = sentence_to_synset(s1, part_of_speech)
   s2_synsets = sentence_to_synset(s2, part_of_speech)
 
+  total_normalized_score = 0
   for measure in SIMILARITY_MEASURES:
     if avg_max:
       score = avg_max_similarity(s1_synsets, s2_synsets, measure)
     else:
       score = first_sense_similarity(s1_synsets, s2_synsets, measure)
+    if measure in ['path', 'lin', 'wup']: # Scores with range [0,1]
+      total_normalized_score += score
     print "Score for %s: %f" % (measure, score)
+
+  print "Average of [0, 1] range scores: %f" % (float(total_normalized_score)/3)
     
 def compare_sentences(sentence_group):
   '''Compares the sentence with key 'b' to all others in sentence_group.
@@ -378,17 +383,17 @@ if __name__ == '__main__':
 #  print similarity(wn.synset('dog.n.01'), wn.synset('cat.n.01'), 'path')
 #  print similarity(wn.synset('dog.n.01'), wn.synset('cat.n.01'), 'wup')
   
-  #print wordnet_similarity('tuna salad how are you', 'Hi are you ok?', wn.VERB)
+  #wordnet_similarity('Hi are you ok?', 'tuna salad how are you', wn.VERB)
   #print '***'
-  #print wordnet_similarity('Hi are you ok?', 'tuna salad how are you', wn.VERB)
-  #print '***'
-  #print wordnet_similarity('greetings how are you', 'Hi are you ok?', wn.VERB)
+  #wordnet_similarity('greetings how are you', 'Hi are you ok?', wn.VERB)
 
- # candidate_source = util.load_pickle('candidate_source.dump')
- # compare_sentences(candidate_source['1'])
+  #candidate_source = util.load_pickle('candidate_source.dump')
+  #compare_sentences(candidate_source['1'])
 
   print ('\nFinal tagged sentence\n%s' %
         tag('He said, "hi! red tape" by about statue of liberty'))
+  #wordnet_similarity('He said, "Hi! red tape dog" by about statue of liberty', 'Hi are you ok? red tape', wn.NOUN)
+  #print '***'
 #  print find_compound_words('That red tape at the statue of liberty')
   #print find_compound_words('He said, "hi! red tape" by about statue of liberty')
   #print wn.synsets('red_tape')

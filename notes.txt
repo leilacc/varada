@@ -7,14 +7,39 @@ Feb 25 -----------------------------------------------------------------------
       - def find_compound_words
 
     - normalize scores (started, not completely done)
+      - Averages scores with a [0, 1] range -> path, wup, lin
 
   TODO:
+    - normalize scores for lch, resnick, jiang-conrath (non-[0,1]-range scores)
     - LSA scores
     - lesk
+    - word2vec (can use from gensim)
     - make repo
 
   meeting notes:
-    -
+    - take the longest compound word, if there are subsets
+    - word2vec (can use from gensim)
+
+  Normalization notes:
+    -path: Ranges from 0 to 1, based on shortest is-a path
+      - score = 1/(shortest is-a path length)
+    -leacock-chodorow: 
+    -wu-palmer: Ranges from 0 to 1, based on depth of the words and their LCS
+      - score = 2*depth(lcs) / (depth(s1) + depth(s2))
+    -resnick: >= 0, based on the information content of the LCS
+      - score = IC(LCS) = -log(p(lcs))
+      - upper limit is log(N) where N=number of words in corpus
+        - 19.95207 for 1014312 words in Brown corpus and log base 2
+    -jiang-conrath:
+      - score = 1 / (IC(s1) + IC(s2) - 2 * IC(lcs))
+      - upper limit (identical words) is -1/(ln((f_root - 1)/f_root))
+        - largest for large values of f_root (frequency of the taxonomy root)
+    -lin: 
+      - score = 2 * IC(lcs) / (IC(s1) + IC(s2))
+      - Ranges from 0 to 1
+
+    0 to 1: Path, wup, lin
+    Other: lch, resnick, jiang-conrath
 
 
 Feb 12 ------------------------------------------------------------------------
