@@ -1,8 +1,8 @@
-# Author: Leila Chan Currie (l.chancurrie@utoronto.ca)
+# __author__ = Leila Chan Currie (l.chancurrie@utoronto.ca)
 
 '''Calculates similarity of 2 sentences.'''
 
-
+import math
 import nltk
 import string
 import util
@@ -11,25 +11,36 @@ from nltk.corpus import wordnet_ic
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tag.stanford import POSTagger
 
-# Initialize corpuses
-BROWN_IC = wordnet_ic.ic('ic-brown.dat')
-SEMCOR_IS = wordnet_ic.ic('ic-semcor.dat')
+PRINT = False
 
 LMTZR = WordNetLemmatizer()
 TAGGER = POSTagger('/Users/Leila/Downloads/stanford-postagger/models/'
                    'english-bidirectional-distsim.tagger', '/Users/Leila/'
                    'Downloads/stanford-postagger/stanford-postagger.jar')
 
-SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin']
+# Initialize corpuses
+BROWN_IC = wordnet_ic.ic('ic-brown.dat')
+SEMCOR_IS = wordnet_ic.ic('ic-semcor.dat')
 
-PARTS_OF_SPEECH = { wn.NOUN: ['NN', 'NNS', 'NNP', 'NNPS', 'n'],
-                    wn.VERB: ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'v'],
-                  }
+# Set corpus
+CORPUS = BROWN_IC
+if CORPUS == BROWN_IC:
+  CORPUS_SIZE = 1014312
+else:
+  CORPUS_SIZE = 2
+
+SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin']
+# Max lch score is 3.6889
+SCALED_MEASURES = {'lch': 1/3.6889, 'jcn': 1, 'res': 1/math.log(CORPUS_SIZE, 2)}
+
 # Pronoun tags are PRP, PRP$, WP, WP$
 # IN is the tag for prepositions or subordinating conjunctions
 # Remaining tags refer to punctuation
 STOPWORD_TAGS = ['PRP', 'PRP$', 'WP', 'WP$', 'IN', '#', '$', '"', "(", ")", ",",
                  '.', ':', '``', '\'\'']
+PARTS_OF_SPEECH = { wn.NOUN: ['NN', 'NNS', 'NNP', 'NNPS', 'n'],
+                    wn.VERB: ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'v'],
+                  }
 
 
 def similarity(synset1, synset2, measure):
@@ -44,15 +55,21 @@ def similarity(synset1, synset2, measure):
   Returns:
     A score denoting how similar synset1 is to synset2 based on measure.
   '''
-  ic_measures = ['res', 'jcn', 'lin'] # These measures require a 2nd arg
+  ic_measures = ['res', 'jcn', 'lin'] # These measures require a corpus
   similarity_function = measure + '_similarity'
+
+  if measure in SCALED_MEASURES:
+    # Score must be normalized
+    scale = SCALED_MEASURES[measure]
+  else:
+    scale = 1
 
   if measure in ic_measures:
     # Equivalent to calling synset1.$sim_fn(synset2, corpus)
-    return getattr(synset1, similarity_function)(synset2, BROWN_IC)
+    return min(1, scale*getattr(synset1, similarity_function)(synset2, CORPUS))
   else:
     # Equivalent to calling synset1.$sim_fn(synset2)
-    return getattr(synset1, similarity_function)(synset2)
+    return min(1, scale*getattr(synset1, similarity_function)(synset2))
 
 def tag(sentence):
   '''Tags a sentence with its parts of speech. Combines compound words and
@@ -96,7 +113,8 @@ def combine_compound_words(tagged_sentence, sentence):
   return tagged_sentence
 
 def find_compound_words(sentence):
-  '''Identifies compound words in sentence.
+  '''Identifies compound words in sentence. Takes the longest possible compound
+  word, if one is the subset of another.
   
   Args:
     sentence: A string.
@@ -106,7 +124,7 @@ def find_compound_words(sentence):
     word, for all compound words found in sentence.
     eg [(0, 1, Synset)] if a 2-word compound word starts the sentence.
   '''
-  compound_words = []
+  all_compound_words = []
   sentence = split_into_words(sentence)
   
   # For each word, iteratively add on the words that follow to see if together
@@ -118,9 +136,24 @@ def find_compound_words(sentence):
       synsets = wn.synsets(test_compound_word)
       if synsets:
         for synset in synsets:
-          compound_words.append((i, j, synset))
+          all_compound_words.append((i, j, synset, test_compound_word))
   
-  return compound_words
+  # Remove compound words that are a subset of another word
+  final_compound_words = []
+  for i in range(len(all_compound_words)):
+    i1 = all_compound_words[i][0]
+    j1 = all_compound_words[i][1]
+    w1 = all_compound_words[i][3]
+    subset = False
+    for j in range(len(all_compound_words)):
+      i2 = all_compound_words[j][0]
+      j2 = all_compound_words[j][1]
+      w2 = all_compound_words[j][3]
+      if i != j and w1 in w2 and i1 >= i2 and j1 <= j2:
+        subset = True
+    if not subset:
+      final_compound_words.append(all_compound_words[i])
+  return final_compound_words
 
 def split_into_words(sentence):
   '''Splits sentence into a list of words without punctuation.
@@ -207,7 +240,9 @@ def get_pos(sentence, parts_of_speech):
     if cur_pos in parts_of_speech:
       matching_tokens.append(cur_token)
 
-  print 'Tokens: %s' % str(matching_tokens)
+  if PRINT:
+    print 'Tokens: %s' % str(matching_tokens)
+
   return matching_tokens
 
 def get_synsets(tokens, pos):
@@ -308,7 +343,9 @@ def lemmatize(tokens, part_of_speech):
       lmtzd_word = LMTZR.lemmatize(word, 'n')
     lemmatized_words.append(lmtzd_word)
 
-  print 'Lemmatized tokens: %s' % str(lemmatized_words)
+  if PRINT:
+    print 'Lemmatized tokens: %s' % str(lemmatized_words)
+
   return lemmatized_words
 
 def sentence_to_synset(sentence, part_of_speech):
@@ -342,21 +379,39 @@ def wordnet_similarity(s1, s2, part_of_speech, avg_max=True):
       TODO: None if comparing for all parts of speech?
     avg_max: If True, will print the average maximum similarity score.
       Otherwise, will print the first sense similarity score. 
+
+  Returns:
+    The average score.
   '''
   s1_synsets = sentence_to_synset(s1, part_of_speech)
   s2_synsets = sentence_to_synset(s2, part_of_speech)
 
   total_normalized_score = 0
+  total_scaled_score = 0
   for measure in SIMILARITY_MEASURES:
     if avg_max:
       score = avg_max_similarity(s1_synsets, s2_synsets, measure)
     else:
       score = first_sense_similarity(s1_synsets, s2_synsets, measure)
+
     if measure in ['path', 'lin', 'wup']: # Scores with range [0,1]
       total_normalized_score += score
-    print "Score for %s: %f" % (measure, score)
+    else:
+      total_scaled_score += score
 
-  print "Average of [0, 1] range scores: %f" % (float(total_normalized_score)/3)
+    if PRINT:
+      print "Score for %s: %f" % (measure, score)
+
+  avg_score = (float(total_normalized_score)/3)
+  avg_scaled_score = (float(total_scaled_score)/3)
+  overall_avg = (avg_scaled_score + avg_score)/2
+
+  if PRINT:
+    print "Average of [0, 1] range scores: %f" % avg_score
+    print "Average of scaled scores: %f" % avg_scaled_score
+    print "Overall average: %f" % overall_avg
+
+  return avg_score
     
 def compare_sentences(sentence_group):
   '''Compares the sentence with key 'b' to all others in sentence_group.
@@ -368,32 +423,41 @@ def compare_sentences(sentence_group):
     None, output is printed.
   '''
   anaphor = sentence_group['b']
-  for key, sentence in sentence_group.iteritems():
+  results = {}
+  for key, antecedent in sentence_group.iteritems():
     if key != 'b':
       # This is a sentence to compare to the anaphor sentence
-      print 'Anaphor: %s' % anaphor
-      print 'Antecedent: %s' % sentence
-      print 'NOUNS ----------------------'
-      wordnet_similarity(anaphor, sentence, wn.NOUN, False)
-      print 'VERBS ----------------------'
-      wordnet_similarity(anaphor, sentence, wn.VERB, False)
-      print '------------------------------------------------------------------'
+      if PRINT:
+        print 'Antecedent: %s' % antecedent
+        print 'NOUNS ----------------------'
+      noun_res = wordnet_similarity(anaphor, antecedent, wn.NOUN, False)
+      if PRINT:
+        print 'VERBS ----------------------'
+      verb_res = wordnet_similarity(anaphor, antecedent, wn.VERB, False)
+      results[(noun_res + verb_res)/2] = antecedent
+      if PRINT:
+        print '----------------------------------------------------------------'
+
+  print 'RANKED ANTECEDENTS'
+  sorted_results = sorted(results)
+  sorted_results.reverse()
+  for i, key in enumerate(sorted_results):
+    print '%d. %s (%f)' % (i + 1, results[key], key)
+  print 'Anaphor: %s' % anaphor
+  print '----------------------------------------------------------------------'
 
 if __name__ == '__main__':
 #  print similarity(wn.synset('dog.n.01'), wn.synset('cat.n.01'), 'path')
-#  print similarity(wn.synset('dog.n.01'), wn.synset('cat.n.01'), 'wup')
   
-  #wordnet_similarity('Hi are you ok?', 'tuna salad how are you', wn.VERB)
-  #print '***'
   #wordnet_similarity('greetings how are you', 'Hi are you ok?', wn.VERB)
 
-  #candidate_source = util.load_pickle('candidate_source.dump')
-  #compare_sentences(candidate_source['1'])
+  candidate_source = util.load_pickle('candidate_source.dump')
+  for key in candidate_source:
+    compare_sentences(candidate_source[key])
 
-  print ('\nFinal tagged sentence\n%s' %
-        tag('He said, "hi! red tape" by about statue of liberty'))
+  #print ('\nFinal tagged sentence\n%s' %
+  #      tag('He said, "hi! red tape" air force academy by about statue of liberty'))
   #wordnet_similarity('He said, "Hi! red tape dog" by about statue of liberty', 'Hi are you ok? red tape', wn.NOUN)
   #print '***'
-#  print find_compound_words('That red tape at the statue of liberty')
   #print find_compound_words('He said, "hi! red tape" by about statue of liberty')
   #print wn.synsets('red_tape')

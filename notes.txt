@@ -1,3 +1,18 @@
+March 5 -----------------------------------------------------------------------
+  Completed:
+    - take the longest compound word, if there are subsets
+    - finished normalizing scores (lch, resnick, jiang-conrath)
+    - find most similar antecedent based on highest average similarity score
+    - make repo
+
+  TODO:
+    - LSA scores
+    - lesk
+    - word2vec (can use from gensim) https://code.google.com/p/word2vec/
+
+  server to try
+  eniac.ais.sandbox
+
 Feb 25 -----------------------------------------------------------------------
   Completed:
     - ignore prepositions and pronouns and punctuation (stoplist)
@@ -24,12 +39,17 @@ Feb 25 -----------------------------------------------------------------------
     -path: Ranges from 0 to 1, based on shortest is-a path
       - score = 1/(shortest is-a path length)
     -leacock-chodorow: 
+      - score = -log(shortest path between synsets/2*depth of taxonomy)
+      - upper limit is − ln(1/(2 · maxDepth))  = 3.6889 in wordnet 
+        - maxDepth is a maximum depth of the taxonomy
+      - http://stackoverflow.com/questions/20112828/maximum-score-in-wordnet-based-similarity
     -wu-palmer: Ranges from 0 to 1, based on depth of the words and their LCS
       - score = 2*depth(lcs) / (depth(s1) + depth(s2))
     -resnick: >= 0, based on the information content of the LCS
       - score = IC(LCS) = -log(p(lcs))
       - upper limit is log(N) where N=number of words in corpus
         - 19.95207 for 1014312 words in Brown corpus and log base 2
+        - nunif strategy
     -jiang-conrath:
       - score = 1 / (IC(s1) + IC(s2) - 2 * IC(lcs))
       - upper limit (identical words) is -1/(ln((f_root - 1)/f_root))
