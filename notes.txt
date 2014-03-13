@@ -1,3 +1,29 @@
+-nltk tokenizer isn't that good, consider switching to splitta
+-maybe stanford force tokenizes when it tags?
+
+  TODO:
+    - get gensim installed on server
+      - try wordvec using text8 to debug
+      - move google news to /p/cl
+    - lesk using pywsd
+    - LSA using wiki corpus
+
+
+March 12 -----------------------------------------------------------------------
+  Completed:
+    - installed gensim! yay!
+    - word2vec code is integrated (same approach as for wordnet similarity:
+    take max similarity score between word combinations), but model is too slow
+    to load when using the google news dataset
+    - wiki corpus for LSA failed to make. trying again but very slow.
+    but thinking I don't need the wiki corpus -> make a mini corpus for each
+    possible antecedent, compare anaphor to this corpus
+
+  TODO:
+    - LSA scores
+    - useable word2vec model
+    - lesk (pywsd?)
+
 March 5 -----------------------------------------------------------------------
   Completed:
     - take the longest compound word, if there are subsets
