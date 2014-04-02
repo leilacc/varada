@@ -1,12 +1,18 @@
--nltk tokenizer isn't that good, consider switching to splitta
--maybe stanford force tokenizes when it tags?
+April 2 ------------------------------------------------------------------------
+
+
+March 19 -----------------------------------------------------------------------
+  Completed:
+    - Lesk integration using pywsd
+      - use the synset for a word returned by simple_lesk
+        - other options: original, adapted, cosine
+    - Word similarity using word2vec
+      - removed line 369 result.init_sims() from gensim's word2vec.py
+
 
   TODO:
-    - get gensim installed on server
-      - try wordvec using text8 to debug
-      - move google news to /p/cl
-    - lesk using pywsd
     - LSA using wiki corpus
+    - lesk similarity disambiguation
 
 
 March 12 -----------------------------------------------------------------------
@@ -18,6 +24,10 @@ March 12 -----------------------------------------------------------------------
     - wiki corpus for LSA failed to make. trying again but very slow.
     but thinking I don't need the wiki corpus -> make a mini corpus for each
     possible antecedent, compare anaphor to this corpus
+
+  Notes:
+    -nltk tokenizer isn't that good, consider switching to splitta
+    -maybe stanford force tokenizes when it tags?
 
   TODO:
     - LSA scores

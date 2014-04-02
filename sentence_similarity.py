@@ -7,13 +7,14 @@ import math
 import nltk
 import string
 import util
+from subprocess import check_output
 
 from nltk.corpus import wordnet as wn
 from nltk.corpus import wordnet_ic
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tag.stanford import POSTagger
 
-from pywsd_lesk import simple_lesk
+from pywsd_lesk import simple_lesk # https://github.com/alvations/pywsd
 
 PRINT = False
 
@@ -88,6 +89,20 @@ def wn_similarity(synset1, synset2, measure):
   else:
     # Equivalent to calling synset1.$sim_fn(synset2)
     return min(1, scale*getattr(synset1, similarity_function)(synset2))
+
+
+def lesk_similarity(synset1, synset2):
+  '''Returns a score denoting how similar 2 word senses are based on Extended Lesk.
+
+  Args:
+    synset1: A WordNet synset, ie wn.synset('dog')
+    synset2: A WordNet synset to be compared to synset1
+
+  Returns:
+    A score denoting how similar synset1 is to synset2 based on the Extended Lesk algorithm.
+  '''
+  score = check_output(["perl", "get_relatedness.pm", synset1, synset2])
+  return int(score)
 
 
 def tag(sentence):
@@ -559,11 +574,11 @@ def get_comparison_results(sentence_group):
 
 
 if __name__ == '__main__':
-  #print word2vec_similarity(dog, cat)
+  print lesk_similarity("car#n#1", "bus#n#2")
   
-  candidate_source = util.load_pickle('candidate_source.dump')
-  for key in candidate_source:
-    get_comparison_results(candidate_source[key])
+  #candidate_source = util.load_pickle('candidate_source.dump')
+  #for key in candidate_source:
+  #  get_comparison_results(candidate_source[key])
 
   #print ('\nFinal tagged sentence\n%s' %
   #      tag('He said, "hi! red tape" air force academy by about statue of liberty'))
