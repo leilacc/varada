@@ -2,20 +2,28 @@
 
 '''Calculates similarity of 2 sentences.'''
 
-import gensim, bz2 # For LSA
+import gensim
+import itertools
 import math
 import nltk
 import string
 import util
 import word2vec
-from subprocess import check_output
 
 from nltk.corpus import wordnet as wn
 from nltk.corpus import wordnet_ic
 from nltk.stem.wordnet import WordNetLemmatizer
 from stanford_tagger import POSTagger
+from subprocess import check_output
 
-PRINT = False
+import os
+java_path = "/u/leila/jdk1.7.0_55/bin/java"
+os.environ['JAVAHOME'] = java_path
+
+import logging
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+
+PRINT = True
 
 LMTZR = WordNetLemmatizer()
 TAGGER = POSTagger('stanford-postagger/models/english-bidirectional-distsim'
@@ -33,7 +41,7 @@ if CORPUS == BROWN_IC:
 else:
   CORPUS_SIZE = 2
 
-SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin']
+SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin', 'lesk']
 # Max lch score is 3.6889
 SCALED_MEASURES = {'lch': 1/3.6889, 'jcn': 1, 'res': 1/math.log(CORPUS_SIZE, 2)}
 
@@ -45,6 +53,47 @@ STOPWORD_TAGS = ['PRP', 'PRP$', 'WP', 'WP$', 'IN', '#', '$', '"', "(", ")", ",",
 PARTS_OF_SPEECH = { wn.NOUN: ['NN', 'NNS', 'NNP', 'NNPS', 'n'],
                     wn.VERB: ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'v'],
                   }
+
+
+
+def generate_LSA_index(corpus_filename):
+  '''Returns a gensim LSA index from the corpus corpus_filename.
+
+  Args:
+    corpus_filename: The name of a .mm file.
+
+  Returns: 
+    A gensim.similarities.MatrixSimilarity object that can be used for 
+    similarity queries.
+  '''
+  corpus1 = gensim.corpora.MmCorpus(corpus_filename)
+  dictionary1 = gensim.corpora.Dictionary().load_from_text('/u/leila/gensim_wikicorpus/articles27_wordids.txt')
+#  corpus2 = gensim.corpora.MmCorpus('/u/leila/gensim_wikicorpus/articles2_bow.mm')
+#  dictionary2 = gensim.corpora.Dictionary().load_from_text('/u/leila/gensim_wikicorpus/articles2_wordids.txt')
+#  corpus3 = gensim.corpora.MmCorpus('/u/leila/gensim_wikicorpus/articles10_bow.mm')
+#  dictionary3 = gensim.corpora.Dictionary().load_from_text('/u/leila/gensim_wikicorpus/articles10_wordids.txt')
+#  dict2_to_dict1 = dictionary1.merge_with(dictionary2)
+#  dict3_to_dict1 = dictionary1.merge_with(dictionary3)
+#  merged_corpus = list(itertools.chain(corpus1, dict2_to_dict1[corpus2], dict3_to_dict1[corpus3]))
+  
+  tfidf = gensim.models.TfidfModel(corpus1)
+  corpus_tfidf = tfidf[corpus1]
+  lsi = gensim.models.LsiModel(corpus_tfidf, id2word=dictionary1, num_topics=2)
+  termcorpus = gensim.matutils.Dense2Corpus(lsi.projection.u.T)
+  
+  # create help structure for similarity queries 
+  # (this also stretches each corpus vector to unit length) 
+  index = gensim.similarities.MatrixSimilarity(termcorpus) 
+
+  query = list(termcorpus)[0] 
+  printsims(dictionary1, index, query)
+
+def printsims(dictionary, index, query): 
+    # get cosine similarity of the query to each one of the 12 terms 
+    sims = index[query] 
+    # print the result, converting ids (integers) to words (strings) 
+    fmt = ["%s(%f)" % (dictionary.id2token[idother], sim) for idother, sim in enumerate(sims)] 
+    print "the query is similar to", ', '.join(fmt[0:10]) 
 
 
 def word2vec_similarity(word1, word2):
@@ -91,17 +140,26 @@ def wn_similarity(synset1, synset2, measure):
 
 
 def lesk_similarity(synset1, synset2):
-  '''Returns a score denoting how similar 2 word senses are based on Extended Lesk.
+  '''Returns a score denoting how similar 2 word senses are based on Adapted
+  Lesk.
 
   Args:
-    synset1: A WordNet synset, ie wn.synset('dog')
-    synset2: A WordNet synset to be compared to synset1
+    synset1: A WordNet Synset, ie wn.synset('dog')
+    synset2: A WordNet Synset to be compared to synset1
 
   Returns:
-    A score denoting how similar synset1 is to synset2 based on the Extended Lesk algorithm.
+    A score denoting how similar synset1 is to synset2 based on the Adapted
+    Lesk algorithm.
   '''
+  synset1 = synset1.name.replace('.', '#')
+  synset2 = synset2.name.replace('.', '#')
   score = check_output(["perl", "get_relatedness.pm", synset1, synset2])
-  return int(score)
+  try:
+    return float(score)
+  except ValueError:
+    # Score is an empty string because algorithm failed to return a score
+    # Known to occur for any comparisons involving shift_key#n#01 
+    return 0
 
 
 def tag(sentence):
@@ -353,7 +411,10 @@ def avg_max_wn_similarity(s1_synsets, s2_synsets, measure):
     for synset2 in s2_synsets:
       for syn1 in synset1:
         for syn2 in synset2:
-          similarity_score = wn_similarity(syn1, syn2, measure)
+          if measure == 'lesk':
+            similarity_score = lesk_similarity(syn1, syn2)
+          else:
+            similarity_score = wn_similarity(syn1, syn2, measure)
 
           if similarity_score > max_score:
             max_score = similarity_score
@@ -440,7 +501,7 @@ def sentence_to_synset(sentence, part_of_speech):
   return synsets
 
 
-def combined_wn_similarity(s1, s2, part_of_speech, which_synset):
+def combined_wn_similarity(s1, s2, part_of_speech):
   '''Prints the combined WordNet similarity score for the words in sentences s1
   and s2.
 
@@ -449,8 +510,6 @@ def combined_wn_similarity(s1, s2, part_of_speech, which_synset):
     s2: A sentence in string form.
     part_of_speech: A WordNet part of speech, ie wn.VERB.
       Only words tagged with part_of_speech will be scored for similarity.
-    which_synset: A string indicating which synset algorithm to use.
-      One of ['avg_max', '1st_sense']
 
   Returns:
     The average score.
@@ -501,12 +560,10 @@ def compare_sentences(anaphor, sentence_group):
       if PRINT:
         print 'Sentence: %s' % sentence
         print 'NOUNS ----------------------'
-      avg_noun_wn_score = combined_wn_similarity(anaphor, sentence, wn.NOUN,
-                                                 'avg_max')
+      avg_noun_wn_score = combined_wn_similarity(anaphor, sentence, wn.NOUN)
       if PRINT:
         print 'VERBS ----------------------'
-      avg_verb_wn_score = combined_wn_similarity(anaphor, sentence, wn.VERB,
-                                                 'avg_max')
+      avg_verb_wn_score = combined_wn_similarity(anaphor, sentence, wn.VERB)
 
       #avg_word2vec_score = avg_max_word2vec_similarity(anaphor, sentence)
 
@@ -531,6 +588,8 @@ def get_comparison_results(sentence_group):
     None, output is printed.
   '''
   anaphor = sentence_group['b']
+  print 'ANAPHOR'
+  print anaphor
   results = compare_sentences(anaphor, sentence_group)
 
   print 'RANKED SENTENCES'
@@ -538,20 +597,15 @@ def get_comparison_results(sentence_group):
   sorted_results.reverse()
   for i, key in enumerate(sorted_results):
     print '%d. %s (%f)' % (i + 1, results[key], key)
-  print 'Anaphor: %s' % anaphor
   print '----------------------------------------------------------------------'
 
 
 if __name__ == '__main__':
-  print lesk_similarity("car#n#1", "bus#n#2")
   
-  #candidate_source = util.load_pickle('candidate_source.dump')
-  #for key in candidate_source:
-  #  get_comparison_results(candidate_source[key])
+  WIKI_INDEX = generate_LSA_index('/u/leila/gensim_wikicorpus/articles27_bow.mm')
 
-  #print ('\nFinal tagged sentence\n%s' %
-  #      tag('He said, "hi! red tape" air force academy by about statue of liberty'))
+  candidate_source = util.load_pickle('candidate_source.dump')
+  for key in candidate_source:
+    get_comparison_results(candidate_source[key])
+
   #combined_wn_similarity('He said, "Hi! red tape dog" by about statue of liberty', 'Hi are you ok? red tape', wn.NOUN)
-  #print '***'
-  #print find_compound_words('He said, "hi! red tape" by about statue of liberty')
-  #print wn.synsets('red_tape')
