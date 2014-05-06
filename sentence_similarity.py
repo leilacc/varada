@@ -6,20 +6,22 @@ import gensim, bz2 # For LSA
 import math
 import nltk
 import string
+import subprocess
 import util
-import word2vec
-from subprocess import check_output
+#import word2vec
 
 from nltk.corpus import wordnet as wn
 from nltk.corpus import wordnet_ic
 from nltk.stem.wordnet import WordNetLemmatizer
-from stanford_tagger import POSTagger
+#from stanford_tagger import POSTagger
 
 PRINT = False
 
+LESK_PIPE = subprocess.Popen(['perl', 'get_relatedness.pm'],
+                             stdout=subprocess.PIPE, stdin=subprocess.PIPE)
 LMTZR = WordNetLemmatizer()
-TAGGER = POSTagger('stanford-postagger/models/english-bidirectional-distsim'
-                   '.tagger', 'stanford-postagger/stanford-postagger.jar')
+#TAGGER = POSTagger('stanford-postagger/models/english-bidirectional-distsim'
+#                   '.tagger', 'stanford-postagger/stanford-postagger.jar')
 #WORD2VEC_MODEL = word2vec.Word2Vec.load_word2vec_format(
 #  '/p/cl/varada/word2vec-GoogleNews-vectors-negative300.bin', binary=True)
 
@@ -100,7 +102,10 @@ def lesk_similarity(synset1, synset2):
   Returns:
     A score denoting how similar synset1 is to synset2 based on the Extended Lesk algorithm.
   '''
-  score = check_output(["perl", "get_relatedness.pm", synset1, synset2])
+  LESK_PIPE.stdin.write(synset1)
+  LESK_PIPE.stdin.write(synset2)
+  score = LESK_PIPE.stdout.read()
+  print score
   return int(score)
 
 
@@ -544,6 +549,7 @@ def get_comparison_results(sentence_group):
 
 if __name__ == '__main__':
   print lesk_similarity("car#n#1", "bus#n#2")
+  LESK_PIPE.kill()
   
   #candidate_source = util.load_pickle('candidate_source.dump')
   #for key in candidate_source:
