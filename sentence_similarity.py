@@ -2,13 +2,12 @@
 
 '''Calculates similarity of 2 sentences.'''
 
-import gensim
-import itertools
-import math
 import nltk
 import string
 import util
 import word2vec
+
+import similarity_measures
 
 from nltk.corpus import wordnet as wn
 from nltk.corpus import wordnet_ic
@@ -20,30 +19,11 @@ import os
 java_path = "/u/leila/jdk1.7.0_55/bin/java"
 os.environ['JAVAHOME'] = java_path
 
-import logging
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
 PRINT = True
 
 LMTZR = WordNetLemmatizer()
 TAGGER = POSTagger('stanford-postagger/models/english-bidirectional-distsim'
                    '.tagger', 'stanford-postagger/stanford-postagger.jar')
-#WORD2VEC_MODEL = word2vec.Word2Vec.load_word2vec_format(
-#  '/p/cl/varada/word2vec-GoogleNews-vectors-negative300.bin', binary=True)
-
-# Initialize corpuses
-BROWN_IC = wordnet_ic.ic('ic-brown.dat')
-SEMCOR_IS = wordnet_ic.ic('ic-semcor.dat')
-# Set corpus
-CORPUS = BROWN_IC
-if CORPUS == BROWN_IC:
-  CORPUS_SIZE = 1014312
-else:
-  CORPUS_SIZE = 2
-
-SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin', 'lesk']
-# Max lch score is 3.6889
-SCALED_MEASURES = {'lch': 1/3.6889, 'jcn': 1, 'res': 1/math.log(CORPUS_SIZE, 2)}
 
 # Pronoun tags are PRP, PRP$, WP, WP$
 # IN is the tag for prepositions or subordinating conjunctions
@@ -53,113 +33,6 @@ STOPWORD_TAGS = ['PRP', 'PRP$', 'WP', 'WP$', 'IN', '#', '$', '"', "(", ")", ",",
 PARTS_OF_SPEECH = { wn.NOUN: ['NN', 'NNS', 'NNP', 'NNPS', 'n'],
                     wn.VERB: ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'v'],
                   }
-
-
-
-def generate_LSA_index(corpus_filename):
-  '''Returns a gensim LSA index from the corpus corpus_filename.
-
-  Args:
-    corpus_filename: The name of a .mm file.
-
-  Returns: 
-    A gensim.similarities.MatrixSimilarity object that can be used for 
-    similarity queries.
-  '''
-  corpus1 = gensim.corpora.MmCorpus(corpus_filename)
-  dictionary1 = gensim.corpora.Dictionary().load_from_text('/u/leila/gensim_wikicorpus/articles27_wordids.txt')
-#  corpus2 = gensim.corpora.MmCorpus('/u/leila/gensim_wikicorpus/articles2_bow.mm')
-#  dictionary2 = gensim.corpora.Dictionary().load_from_text('/u/leila/gensim_wikicorpus/articles2_wordids.txt')
-#  corpus3 = gensim.corpora.MmCorpus('/u/leila/gensim_wikicorpus/articles10_bow.mm')
-#  dictionary3 = gensim.corpora.Dictionary().load_from_text('/u/leila/gensim_wikicorpus/articles10_wordids.txt')
-#  dict2_to_dict1 = dictionary1.merge_with(dictionary2)
-#  dict3_to_dict1 = dictionary1.merge_with(dictionary3)
-#  merged_corpus = list(itertools.chain(corpus1, dict2_to_dict1[corpus2], dict3_to_dict1[corpus3]))
-  
-  tfidf = gensim.models.TfidfModel(corpus1)
-  corpus_tfidf = tfidf[corpus1]
-  lsi = gensim.models.LsiModel(corpus_tfidf, id2word=dictionary1, num_topics=2)
-  termcorpus = gensim.matutils.Dense2Corpus(lsi.projection.u.T)
-  
-  # create help structure for similarity queries 
-  # (this also stretches each corpus vector to unit length) 
-  index = gensim.similarities.MatrixSimilarity(termcorpus) 
-
-  query = list(termcorpus)[0] 
-  printsims(dictionary1, index, query)
-
-def printsims(dictionary, index, query): 
-    # get cosine similarity of the query to each one of the 12 terms 
-    sims = index[query] 
-    # print the result, converting ids (integers) to words (strings) 
-    fmt = ["%s(%f)" % (dictionary.id2token[idother], sim) for idother, sim in enumerate(sims)] 
-    print "the query is similar to", ', '.join(fmt[0:10]) 
-
-
-def word2vec_similarity(word1, word2):
-  '''Returns the word2vec similarity score of word1 and word2.
-  
-  Args:
-    word1: A string.
-    word2: A string.
-
-  Returns:
-    A float representing the similarity of word1 and word2 as calculated by
-    the word2vec model WORD2VEC_MODEL.
-  '''
-  return WORD2VEC_MODEL.similarity(word1, word2)
-
-
-def wn_similarity(synset1, synset2, measure):
-  '''Returns a score denoting how similar 2 word senses are, based on measure.
-
-  Args:
-    synset1: A WordNet synset, ie wn.synset('dog')
-    synset2: A WordNet synset to be compared to synset1
-    measure: A string. The similarity measure to be used. Must be in
-      SIMILARITY_MEASURES.
-
-  Returns:
-    A score denoting how similar synset1 is to synset2 based on measure.
-  '''
-  ic_measures = ['res', 'jcn', 'lin'] # These measures require a corpus
-  similarity_function = measure + '_similarity'
-
-  if measure in SCALED_MEASURES:
-    # Score must be normalized
-    scale = SCALED_MEASURES[measure]
-  else:
-    scale = 1
-
-  if measure in ic_measures:
-    # Equivalent to calling synset1.$sim_fn(synset2, corpus)
-    return min(1, scale*getattr(synset1, similarity_function)(synset2, CORPUS))
-  else:
-    # Equivalent to calling synset1.$sim_fn(synset2)
-    return min(1, scale*getattr(synset1, similarity_function)(synset2))
-
-
-def lesk_similarity(synset1, synset2):
-  '''Returns a score denoting how similar 2 word senses are based on Adapted
-  Lesk.
-
-  Args:
-    synset1: A WordNet Synset, ie wn.synset('dog')
-    synset2: A WordNet Synset to be compared to synset1
-
-  Returns:
-    A score denoting how similar synset1 is to synset2 based on the Adapted
-    Lesk algorithm.
-  '''
-  synset1 = synset1.name.replace('.', '#')
-  synset2 = synset2.name.replace('.', '#')
-  score = check_output(["perl", "get_relatedness.pm", synset1, synset2])
-  try:
-    return float(score)
-  except ValueError:
-    # Score is an empty string because algorithm failed to return a score
-    # Known to occur for any comparisons involving shift_key#n#01 
-    return 0
 
 
 def tag(sentence):
@@ -363,13 +236,16 @@ def get_synsets(tokens, pos):
   return synsets
 
 
-def avg_max_word2vec_similarity(sentence1, sentence2):
+def avg_max_similarity(sentence1, sentence2, sim_func):
   '''Returns the average maximum similarity score between the words in sentence1
   and sentence 2.
 
   Args:
     sentence1: A string.
     sentence2: A string.
+    sim_func: The similarity function to be used.
+      ie similarity_measures.word2vec_similarity or
+      similarity_measures.LSA_similarity.
 
   Returns:
     A float. The average maximum similarity score between the words in sentence1
@@ -382,7 +258,7 @@ def avg_max_word2vec_similarity(sentence1, sentence2):
   for word1 in sentence1:
     max_score = 0 # Max sim score between word1 and all words in sentence2
     for word2 in sentence2:
-      similarity_score = word2vec_similarity(word1, word2)
+      similarity_score = sim_func(word1, word2)
 
       if similarity_score > max_score:
         max_score = similarity_score
@@ -399,7 +275,7 @@ def avg_max_wn_similarity(s1_synsets, s2_synsets, measure):
     s1_synsets: A list of lists of synsets.
     s2_synsets: A list of lists of synsets.
     measure: A string. The similarity measure to be used. Must be in
-      SIMILARITY_MEASURES.
+      similarity_measures.SIMILARITY_MEASURES.
 
   Returns:
     The average of the maximum similarity scores between each list of synsets i
@@ -412,9 +288,10 @@ def avg_max_wn_similarity(s1_synsets, s2_synsets, measure):
       for syn1 in synset1:
         for syn2 in synset2:
           if measure == 'lesk':
-            similarity_score = lesk_similarity(syn1, syn2)
+            similarity_score = similarity_measures.lesk_similarity(syn1, syn2)
           else:
-            similarity_score = wn_similarity(syn1, syn2, measure)
+            similarity_score = similarity_measures.wn_similarity(syn1, syn2,
+                                                                 measure)
 
           if similarity_score > max_score:
             max_score = similarity_score
@@ -431,7 +308,7 @@ def first_sense_wn_similarity(s1_synsets, s2_synsets, measure):
     s1_synsets: A list of lists of synsets.
     s2_synsets: A list of lists of synsets.
     measure: A string. The similarity measure to be used. Must be in
-      SIMILARITY_MEASURES.
+      similarity_measures.SIMILARITY_MEASURES.
 
   Returns:
     The average of the maximum similarity scores between each list of synsets i
@@ -445,7 +322,7 @@ def first_sense_wn_similarity(s1_synsets, s2_synsets, measure):
   for syn1 in s1_synsets:
     max_score = 0 # Max sim score between syn1 and all the syns in s2_synsets
     for syn2 in s2_synsets:
-      similarity_score = wn_similarity(syn1, syn2, measure)
+      similarity_score = similarity_measures.wn_similarity(syn1, syn2, measure)
       if similarity_score > max_score:
         max_score = similarity_score
     total_score += max_score
@@ -519,7 +396,7 @@ def combined_wn_similarity(s1, s2, part_of_speech):
 
   total_normalized_score = 0
   total_scaled_score = 0
-  for measure in SIMILARITY_MEASURES:
+  for measure in similarity_measures.SIMILARITY_MEASURES:
     score = avg_max_wn_similarity(s1_synsets, s2_synsets, measure)
 
     if measure in ['path', 'lin', 'wup']: # Scores with range [0,1]
@@ -565,12 +442,16 @@ def compare_sentences(anaphor, sentence_group):
         print 'VERBS ----------------------'
       avg_verb_wn_score = combined_wn_similarity(anaphor, sentence, wn.VERB)
 
-      #avg_word2vec_score = avg_max_word2vec_similarity(anaphor, sentence)
+      #avg_word2vec_score = avg_max_similarity(anaphor, sentence,
+        #similarity_measures.word2vec_similarity)
+      avg_LSA_score = avg_max_similarity(anaphor, sentence,
+                                         similarity_measures.LSA_similarity)
 
       # Average the different similarity scores to get an overall score for
       # this sentence
-      overall_score = avg_noun_wn_score + avg_verb_wn_score# + avg_word2vec_score
-      results[(overall_score)/3] = sentence
+      overall_score = (avg_noun_wn_score + avg_verb_wn_score + avg_LSA_score)
+                     #  + avg_word2vec_score)
+      results[(overall_score)/4] = sentence
       if PRINT:
         print '----------------------------------------------------------------'
 
@@ -602,7 +483,8 @@ def get_comparison_results(sentence_group):
 
 if __name__ == '__main__':
   
-  WIKI_INDEX = generate_LSA_index('/u/leila/gensim_wikicorpus/articles27_bow.mm')
+  #print similarity_measures.LSA_similarity('dog', 'cat')
+  #print similarity_measures.LSA_similarity('bus', 'banana')
 
   candidate_source = util.load_pickle('candidate_source.dump')
   for key in candidate_source:
