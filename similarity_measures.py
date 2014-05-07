@@ -1,5 +1,8 @@
 import math
 
+from nltk.corpus import wordnet_ic # For corpuses
+from subprocess import check_output # For Lesk
+
 import lsa_init
 
 #WORD2VEC_MODEL = word2vec.Word2Vec.load_word2vec_format(
@@ -19,7 +22,7 @@ if CORPUS == BROWN_IC:
 else:
   CORPUS_SIZE = 2
 
-SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin', 'lesk']
+SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin']#, 'lesk']
 # Max lch score is 3.6889
 SCALED_MEASURES = {'lch': 1/3.6889, 'jcn': 1, 'res': 1/math.log(CORPUS_SIZE, 2)}
 

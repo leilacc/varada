@@ -7,13 +7,12 @@ import string
 import util
 import word2vec
 
-import similarity_measures
+#import similarity_measures
 
 from nltk.corpus import wordnet as wn
-from nltk.corpus import wordnet_ic
 from nltk.stem.wordnet import WordNetLemmatizer
 from stanford_tagger import POSTagger
-from subprocess import check_output
+from perlfunc import perlfunc, perlreq, perl5lib
 
 import os
 java_path = "/u/leila/jdk1.7.0_55/bin/java"
@@ -35,6 +34,11 @@ PARTS_OF_SPEECH = { wn.NOUN: ['NN', 'NNS', 'NNP', 'NNPS', 'n'],
                   }
 
 
+@perlfunc
+@perlreq('get_relatedness.pl')
+def myfunc(a, b):
+    pass
+
 def tag(sentence):
   '''Tags a sentence with its parts of speech. Combines compound words and
   removes stop words.
@@ -48,7 +52,7 @@ def tag(sentence):
     eg [('hello', 'UH'), ('how', 'WRB'), ('are', 'VBP'), ('you', 'PRP')]
   '''
   tagged_sentence = TAGGER.tag(nltk.word_tokenize(sentence))
-#  print "Original tagged sentence:\n%s" % tagged_sentence
+  #  print "Original tagged sentence:\n%s" % tagged_sentence
   tagged_sentence = combine_compound_words(tagged_sentence, sentence)
   return remove_stopwords(tagged_sentence)
 
@@ -252,19 +256,26 @@ def avg_max_similarity(sentence1, sentence2, sim_func):
   and sentence 2.
   '''
   total_sim_score = 0
+  denom = 0
   sentence1 = split_into_words(sentence1)
   sentence2 = split_into_words(sentence2)
 
   for word1 in sentence1:
-    max_score = 0 # Max sim score between word1 and all words in sentence2
+    max_score = -1 # Max sim score between word1 and all words in sentence2
     for word2 in sentence2:
-      similarity_score = sim_func(word1, word2)
+      try:
+        similarity_score = sim_func(word1, word2)
+      except KeyError:
+        # For LSA, word was not in dict
+        similarity_score = -1
 
       if similarity_score > max_score:
         max_score = similarity_score
-    total_sim_score += max_score
+    if max_score >= 0:
+      total_sim_score += max_score
+      denom += 1
 
-  return 0 if not sentence1 else float(total_sim_score)/len(sentence1)
+  return 0 if not sentence1 or not denom else float(total_sim_score)/denom
 
 
 def avg_max_wn_similarity(s1_synsets, s2_synsets, measure):
@@ -412,9 +423,7 @@ def combined_wn_similarity(s1, s2, part_of_speech):
   overall_avg = (avg_scaled_score + avg_score)/2
 
   if PRINT:
-    print "Average of [0, 1] range scores: %f" % avg_score
-    print "Average of scaled scores: %f" % avg_scaled_score
-    print "Overall average: %f" % overall_avg
+    print "Average WordNet score: %f" % overall_avg
 
   return avg_score
 
@@ -451,8 +460,10 @@ def compare_sentences(anaphor, sentence_group):
       # this sentence
       overall_score = (avg_noun_wn_score + avg_verb_wn_score + avg_LSA_score)
                      #  + avg_word2vec_score)
-      results[(overall_score)/4] = sentence
+      results[(overall_score)/3] = sentence
       if PRINT:
+        print 'LSA score: %f' % avg_LSA_score
+        print 'Overall avg score: %f' % (overall_score/3)
         print '----------------------------------------------------------------'
 
   return results
@@ -485,6 +496,8 @@ if __name__ == '__main__':
   
   #print similarity_measures.LSA_similarity('dog', 'cat')
   #print similarity_measures.LSA_similarity('bus', 'banana')
+
+  myfunc('car#n#1', 'bus#n#1')
 
   candidate_source = util.load_pickle('candidate_source.dump')
   for key in candidate_source:
