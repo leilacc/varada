@@ -4,15 +4,15 @@
 
 import nltk
 import string
+import subprocess
 import util
-import word2vec
+#import word2vec
 
 #import similarity_measures
 
 from nltk.corpus import wordnet as wn
 from nltk.stem.wordnet import WordNetLemmatizer
 from stanford_tagger import POSTagger
-from perlfunc import perlfunc, perlreq, perl5lib
 
 import os
 java_path = "/u/leila/jdk1.7.0_55/bin/java"
@@ -33,11 +33,6 @@ PARTS_OF_SPEECH = { wn.NOUN: ['NN', 'NNS', 'NNP', 'NNPS', 'n'],
                     wn.VERB: ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ', 'v'],
                   }
 
-
-@perlfunc
-@perlreq('get_relatedness.pl')
-def myfunc(a, b):
-    pass
 
 def tag(sentence):
   '''Tags a sentence with its parts of speech. Combines compound words and
@@ -497,10 +492,7 @@ if __name__ == '__main__':
   #print similarity_measures.LSA_similarity('dog', 'cat')
   #print similarity_measures.LSA_similarity('bus', 'banana')
 
-  myfunc('car#n#1', 'bus#n#1')
 
   candidate_source = util.load_pickle('candidate_source.dump')
   for key in candidate_source:
     get_comparison_results(candidate_source[key])
-
-  #combined_wn_similarity('He said, "Hi! red tape dog" by about statue of liberty', 'Hi are you ok? red tape', wn.NOUN)

@@ -1,4 +1,18 @@
-April 2 ------------------------------------------------------------------------
+-100, 000 to a million tokens for LSA
+-add vector
+-pipe for perl
+
+
+different ways of taking similarity scores (avg of all?)
+  -addition of similarity scores
+  -
+
+
+April 2 ------------------------------------------------------------------------  
+  - finish lesk
+  - get LSA working
+
+  - phrase comparison using word2vec (compositionality)
 
 
 March 19 -----------------------------------------------------------------------
