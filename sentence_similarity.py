@@ -8,7 +8,7 @@ import subprocess
 import util
 #import word2vec
 
-#import similarity_measures
+import similarity_measures
 
 from nltk.corpus import wordnet as wn
 from nltk.stem.wordnet import WordNetLemmatizer
@@ -294,7 +294,11 @@ def avg_max_wn_similarity(s1_synsets, s2_synsets, measure):
       for syn1 in synset1:
         for syn2 in synset2:
           if measure == 'lesk':
-            similarity_score = similarity_measures.lesk_similarity(syn1, syn2)
+            similarity_score = similarity_measures.lesk_similarity('lesk', syn1,
+                                                                   syn2)
+          elif measure == 'vector':
+            similarity_score = similarity_measures.lesk_similarity('vector',
+                                                                   syn1, syn2)
           else:
             similarity_score = similarity_measures.wn_similarity(syn1, syn2,
                                                                  measure)

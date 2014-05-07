@@ -1,7 +1,9 @@
+import json
 import math
+import urllib
+import urllib2
 
 from nltk.corpus import wordnet_ic # For corpuses
-from subprocess import check_output # For Lesk
 
 import lsa_init
 
@@ -22,7 +24,8 @@ if CORPUS == BROWN_IC:
 else:
   CORPUS_SIZE = 2
 
-SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin']#, 'lesk']
+SIMILARITY_MEASURES = ['path', 'lch', 'wup', 'res', 'jcn', 'lin',
+                       'lesk', 'vector']
 # Max lch score is 3.6889
 SCALED_MEASURES = {'lch': 1/3.6889, 'jcn': 1, 'res': 1/math.log(CORPUS_SIZE, 2)}
 
@@ -94,11 +97,13 @@ def wn_similarity(synset1, synset2, measure):
     return min(1, scale*getattr(synset1, similarity_function)(synset2))
 
 
-def lesk_similarity(synset1, synset2):
+#TODO: change name, check for valid return values
+def lesk_similarity(sim_type, synset1, synset2):
   '''Returns a score denoting how similar 2 word senses are based on Adapted
   Lesk.
 
   Args:
+    sim_type: A string, either "lesk" or "vector".
     synset1: A WordNet Synset, ie wn.synset('dog')
     synset2: A WordNet Synset to be compared to synset1
 
@@ -108,7 +113,16 @@ def lesk_similarity(synset1, synset2):
   '''
   synset1 = synset1.name.replace('.', '#')
   synset2 = synset2.name.replace('.', '#')
-  score = check_output(["perl", "get_relatedness.pm", synset1, synset2])
+
+  data = json.dumps({"type" : sim_type, "syn1" : synset1, "syn2": synset2})
+  headers = {
+        "User-Agent" : "pyclient",
+  }
+
+  request = urllib2.Request("http://127.0.0.1:8080/api", data, headers)
+  response = urllib2.urlopen(request)
+  score = response.read().split(':')[1][0:-1]
+  
   try:
     return float(score)
   except ValueError:
