@@ -8,18 +8,18 @@ import json
 import math
 import urllib
 import urllib2
-#import word2vec
+import word2vec
 
 from nltk.corpus import wordnet_ic # For corpuses
 
 import lsa_init
 
-#WORD2VEC_MODEL = word2vec.Word2Vec.load_word2vec_format(
-#  '/p/cl/varada/word2vec-GoogleNews-vectors-negative300.bin', binary=True)
+WORD2VEC_MODEL = word2vec.Word2Vec.load_word2vec_format(
+  '/p/cl/varada/word2vec-GoogleNews-vectors-negative300.bin', binary=True)
 
 # Models for LSA similarity
 WIKI_DICT, WIKI_INDEX, WIKI_CORPUS = lsa_init.generate_LSA_models(
-  '/u/leila/gensim_wikicorpus/articles1')
+  '/u/leila/gensim_wikicorpus/articles27')
 
 # Initialize corpuses
 BROWN_IC = wordnet_ic.ic('ic-brown.dat')
@@ -132,7 +132,7 @@ def lesk_similarity(sim_type, synset1, synset2):
     score = response.read().split(':')[1][0:-1]
     return float(score)
   except urllib2.URLError:
-    raise URLError('Perl server for Lesk similarity refused connection.')
+    raise urllib2.URLError('Perl server for Lesk similarity refused connection')
   except ValueError:
     # Score is an empty string because algorithm failed to return a score
     # Known to occur for any comparisons involving shift_key#n#01 

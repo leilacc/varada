@@ -1,8 +1,13 @@
+#!/usr/bin/env python
+
+'''Initializes an LSA model that can be used for word-word similarity queries'''
+
+__author__ = 'leila@cs.toronto.edu'
+
 import gensim
 
 import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
 
 # Number of dimensions used for LSA
 NUM_DIMENSIONS = 100
