@@ -1,7 +1,14 @@
+#!/usr/bin/env python
+
+'''Various methods for calculating word/synset similarity.'''
+
+__author__ = 'leila@cs.toronto.edu'
+
 import json
 import math
 import urllib
 import urllib2
+#import word2vec
 
 from nltk.corpus import wordnet_ic # For corpuses
 
@@ -120,11 +127,12 @@ def lesk_similarity(sim_type, synset1, synset2):
   }
 
   request = urllib2.Request("http://127.0.0.1:8080/api", data, headers)
-  response = urllib2.urlopen(request)
-  score = response.read().split(':')[1][0:-1]
-  
   try:
+    response = urllib2.urlopen(request)
+    score = response.read().split(':')[1][0:-1]
     return float(score)
+  except urllib2.URLError:
+    raise URLError('Perl server for Lesk similarity refused connection.')
   except ValueError:
     # Score is an empty string because algorithm failed to return a score
     # Known to occur for any comparisons involving shift_key#n#01 

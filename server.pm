@@ -57,9 +57,8 @@ my $http = HTTP::Daemon->new(
               $client->send_response(HTTP::Response->new(
                 RC_OK,
                 undef,
-                [ ],
-                # return the result as json
-                $json
+                [ ], # No header, it complains about them
+                $json # Return result as json
               ));
             }
             else {

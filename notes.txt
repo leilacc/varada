@@ -1,3 +1,9 @@
+May 7
+1. Composition of words
+2. Evaluation on standard corpora
+3. Difference between ana-ante and ana-candidate similarity scores
+
+
 -100, 000 to a million tokens for LSA
 -add vector
 -pipe for perl
