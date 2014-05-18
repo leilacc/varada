@@ -5,17 +5,48 @@
 __author__ = 'leila@cs.toronto.edu'
 
 import similarity_measures
-import subprocess
-import util
 
 from nltk.corpus import wordnet as wn
 from sentence_to_synset import sentence_to_synset
 from tag import split_into_words
 
-PRINT = False
-NUM_FIRST_ANTE = 0
-NUM_LAST_ANTE = 0
-TOTAL_ANTE = 0
+PRINT = True
+
+    
+def compare_sentences(sentence1, sentence2):
+  '''Compares sentence1 to sentence2 using various similarity measures.
+
+  Args:
+    sentence1: A string.
+    sentence2: A string.
+
+  Returns:
+    A list of similarity scores.
+  '''
+  if PRINT:
+    print 'Sentence 1: %s' % sentence1
+    print 'Sentence 2: %s' % sentence2
+    print 'NOUNS ----------------------'
+  noun_wn_scores = combined_wn_similarity(sentence1, sentence2, wn.NOUN)
+  scores = noun_wn_scores
+
+  if PRINT:
+    print 'VERBS ----------------------'
+  verb_wn_scores = combined_wn_similarity(sentence1, sentence2, wn.VERB)
+  scores.extend(verb_wn_scores)
+
+  avg_word2vec_score = avg_max_similarity(sentence1, sentence2,
+    similarity_measures.word2vec_similarity)
+  scores.append(avg_word2vec_score)
+  #avg_LSA_score = avg_max_similarity(sentence1, sentence2,
+                     #                similarity_measures.LSA_similarity)
+
+  if PRINT:
+    print 'word2vec score: %f' % avg_word2vec_score
+    print '----------------------------------------------------------------'
+
+  return scores
+
 
 def avg_max_similarity(sentence1, sentence2, sim_func):
   '''Returns the average maximum similarity score between the words in sentence1
@@ -43,7 +74,7 @@ def avg_max_similarity(sentence1, sentence2, sim_func):
       try:
         similarity_score = sim_func(word1, word2)
       except KeyError:
-        # For LSA, word was not in dict
+        # Word was not in dict
         similarity_score = -1
 
       if similarity_score > max_score:
@@ -138,107 +169,12 @@ def combined_wn_similarity(s1, s2, part_of_speech):
   s1_synsets = sentence_to_synset(s1, part_of_speech)
   s2_synsets = sentence_to_synset(s2, part_of_speech)
 
-  total_score = 0
+  all_scores = []
   for measure in similarity_measures.SIMILARITY_MEASURES:
     score = avg_max_wn_similarity(s1_synsets, s2_synsets, measure)
-    total_score += score
+    all_scores.append(score)
 
     if PRINT:
       print "Score for %s: %f" % (measure, score)
 
-  avg_score = total_score/len(similarity_measures.SIMILARITY_MEASURES)
-
-  if PRINT:
-    print "Average WordNet score: %f" % avg_score
-
-  return total_score
-
-    
-def compare_sentences(anaphor, sentence_group):
-  '''Compares anaphor to all other sentences in sentence_group.
-
-  Args:
-    anaphor: A string.
-    sentence_group: A dictionary with string (sentence) values.
-
-  Returns:
-    A dictionary. The value is a key from sentence_group and the key is the
-    sentence's overall similarity score to anaphor.
-  '''
-  results = {}
-  for key, sentence in sentence_group.iteritems():
-    if key != 'b':
-      # This is a sentence to compare to the anaphor sentence
-      if PRINT:
-        print 'Sentence: %s' % sentence
-        print 'NOUNS ----------------------'
-      total_noun_wn_score = combined_wn_similarity(anaphor, sentence, wn.NOUN)
-      if PRINT:
-        print 'VERBS ----------------------'
-      total_verb_wn_score = combined_wn_similarity(anaphor, sentence, wn.VERB)
-
-      avg_word2vec_score = avg_max_similarity(anaphor, sentence,
-        similarity_measures.word2vec_similarity)
-      avg_LSA_score = avg_max_similarity(anaphor, sentence,
-                                         similarity_measures.LSA_similarity)
-
-      # Average the different similarity scores to get an overall score for
-      # this sentence
-      overall_score = (total_noun_wn_score + total_verb_wn_score + avg_LSA_score
-                       + avg_word2vec_score)
-      results[(overall_score)/20] = key
-      if PRINT:
-        print 'LSA score: %f' % avg_LSA_score
-        print 'Overall avg score: %f' % (overall_score/20)
-        print '----------------------------------------------------------------'
-
-  return results
-
-
-def get_comparison_results(sentence_group, actual_antecedent_key):
-  '''Prints the results of comparing the sentence with key 'b' to all others in
-  sentence_group.
-
-  Args:
-    sentence_group: A dictionary with string (sentence) values.
-    actual_antecedent_key: The key to the actual antecedent in sentence_group.
-
-  Returns:
-    None.
-  '''
-  anaphor = sentence_group['b']
-  results = compare_sentences(anaphor, sentence_group)
-  sorted_results = sorted(results)
-  sorted_results.reverse()
-
-  if results[sorted_results[0]] == actual_antecendent_key:
-    NUM_FIRST_ANTE += 1
-  if results[sorted_results[-1]] == actual_antecendent_key:
-    NUM_LAST_ANTE += 1
-  TOTAL_ANTE += 1
-  print TOTAL_ANTE
-
-  if PRINT:
-    print 'ANAPHOR'
-    print anaphor
-    print 'RANKED SENTENCES'
-    for i, key in enumerate(sorted_results):
-      print '%d. %s (%f)' % (i + 1, results[key], key)
-    print '--------------------------------------------------------------------'
-
-
-if __name__ == '__main__':
-  
-  candidate_source = util.load_pickle('candidate_source.dump')
-  crowd_results = util.load_pickle('crowd_results.dump')
-  for key in candidate_source:
-    try:
-      get_comparison_results(candidate_source[key], crowd_results[key][1])
-    except KeyError:
-      # crowd_results has fewer identifiers than candidate_source because
-      # annotators did not agree on the antecedents for some ids
-      pass
-
-  print NUM_FIRST_ANTE
-  print NUM_LAST_ANTE
-  print TOTAL_ANTE
+  return all_scores

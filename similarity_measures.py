@@ -18,8 +18,8 @@ WORD2VEC_MODEL = word2vec.Word2Vec.load_word2vec_format(
   '/p/cl/varada/word2vec-GoogleNews-vectors-negative300.bin', binary=True)
 
 # Models for LSA similarity
-WIKI_DICT, WIKI_INDEX, WIKI_CORPUS = lsa_init.generate_LSA_models(
-  '/u/leila/gensim_wikicorpus/articles27')
+#WIKI_DICT, WIKI_INDEX, WIKI_CORPUS = lsa_init.generate_LSA_models(
+#  '/u/leila/gensim_wikicorpus/articles27')
 
 # Initialize corpuses
 BROWN_IC = wordnet_ic.ic('ic-brown.dat')
@@ -130,7 +130,7 @@ def lesk_similarity(sim_type, synset1, synset2):
   try:
     response = urllib2.urlopen(request)
     score = response.read().split(':')[1][0:-1]
-    return float(score)
+    return min(float(score), 1.0) # Sometimes lesk scores are slightly > 1
   except urllib2.URLError:
     raise urllib2.URLError('Perl server for Lesk similarity refused connection')
   except ValueError:

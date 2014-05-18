@@ -8,6 +8,7 @@ __author__ = 'leila@cs.toronto.edu'
 import nltk
 import string
 import stanford_tagger
+import unicodedata
 
 # Must set JAVAHOME for the stanford tagger
 import os
@@ -36,6 +37,10 @@ def tag(sentence):
     Compound words are tagged as one and stop words are removed.
     eg [('hello', 'UH'), ('how', 'WRB'), ('are', 'VBP'), ('you', 'PRP')]
   '''
+  # Normalize unicode characters so the tagger can convert them to ascii
+  # ie e accent -> e
+  sentence = unicodedata.normalize('NFKD', sentence).encode('ascii', 'ignore')
+  
   tagged_sentence = TAGGER.tag(nltk.word_tokenize(sentence))
   #  print "Original tagged sentence:\n%s" % tagged_sentence
   tagged_sentence = combine_compound_words(tagged_sentence, sentence)

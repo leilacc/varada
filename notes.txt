@@ -1,17 +1,26 @@
 May 7
-1. Composition of words
-2. Evaluation on standard corpora
-3. Difference between ana-ante and ana-candidate similarity scores
+  TODO:
+    - get >100 000 tokens for LSA
+    - Refactor last bits
+    - step through everything to make sure it makes sense
+    - read that paper already
+
+  Possible next steps:
+    1. Composition of words
+    2. Evaluation on standard corpora
+    3. Difference between ana-ante and ana-candidate similarity scores
 
 
--100, 000 to a million tokens for LSA
--add vector
--pipe for perl
+April 9 ------------------------------------------------------------------------
 
+  Completed:
+    -100, 000 to a million tokens for LSA
+    -add vector similarity
+    -pipe for perl
 
-different ways of taking similarity scores (avg of all?)
-  -addition of similarity scores
-  -
+  Notes:
+    - different ways of taking similarity scores (avg of all?)
+      -addition of similarity scores
 
 
 April 2 ------------------------------------------------------------------------  
