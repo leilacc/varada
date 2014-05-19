@@ -118,8 +118,8 @@ def lesk_similarity(sim_type, synset1, synset2):
     A score denoting how similar synset1 is to synset2 based on the Adapted
     Lesk algorithm.
   '''
-  synset1 = synset1.name.replace('.', '#')
-  synset2 = synset2.name.replace('.', '#')
+  synset1 = synset1.name[::-1].replace('.', '#', 2)[::-1]
+  synset2 = synset2.name[::-1].replace('.', '#', 2)[::-1]
 
   data = json.dumps({"type" : sim_type, "syn1" : synset1, "syn2": synset2})
   headers = {

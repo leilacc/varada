@@ -24,6 +24,7 @@ def get_comparison_results(sentence_group, actual_antecedent_key, group_key):
   Returns:
     None.
   '''
+  print 'changing'
   anaphor = sentence_group['b']
   ana_category = get_anaphor_category(anaphor)
 
@@ -32,19 +33,19 @@ def get_comparison_results(sentence_group, actual_antecedent_key, group_key):
                'verb_path', 'verb_lch', 'verb_wup', 'verb_res', 'verb_jcn',
                'verb_lin', 'verb_lesk', 'verb_vector', 'word2vec']
   filename = 'results/%s/%s.csv' % (ana_category, group_key) 
-  if os.path.isfile(filename):
+#  if os.path.isfile(filename):
     # already got these results
-    return
+#    return
 
   f = open(filename, 'w')
   wr = csv.writer(f, quoting=csv.QUOTE_ALL)
   wr.writerow(csvheader)
 
   for key, candidate in sentence_group.iteritems():
-    if key != 'b':
-      name = 'Antecedent' if key == actual_antecedent_key else key
-      results = sentence_similarity.compare_sentences(anaphor, candidate)
-      wr.writerow([name] + results)
+#    if key != 'b':
+    name = 'Antecedent' if key == actual_antecedent_key else key
+    results = sentence_similarity.compare_sentences(anaphor, candidate)
+    wr.writerow([name] + results)
 
   if PRINT:
     print 'ANAPHOR'
