@@ -10,7 +10,7 @@ import util
 import csv
 
 PRINT = True # Prints info while running if True
-OVERWRITE = False # Skips previously calculated groups if False
+OVERWRITE = False # Skips previously calculated groups if False. Saves time.
 
 
 def get_comparison_results(sentence_group, actual_antecedent_key, group_key):
@@ -35,7 +35,7 @@ def get_comparison_results(sentence_group, actual_antecedent_key, group_key):
                'verb_lin', 'verb_lesk', 'verb_vector', 'word2vec']
   filename = 'results/%s/%s.csv' % (ana_category, group_key) 
   if os.path.isfile(filename) and not OVERWRITE:
-    # already got these results
+    # Already got these results, and should not overwrite
     return
 
   f = open(filename, 'w')
