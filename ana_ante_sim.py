@@ -9,7 +9,8 @@ import sentence_similarity
 import util
 import csv
 
-PRINT = True
+PRINT = True # Prints info while running if True
+OVERWRITE = False # Skips previously calculated groups if False
 
 
 def get_comparison_results(sentence_group, actual_antecedent_key, group_key):
@@ -33,19 +34,19 @@ def get_comparison_results(sentence_group, actual_antecedent_key, group_key):
                'verb_path', 'verb_lch', 'verb_wup', 'verb_res', 'verb_jcn',
                'verb_lin', 'verb_lesk', 'verb_vector', 'word2vec']
   filename = 'results/%s/%s.csv' % (ana_category, group_key) 
-#  if os.path.isfile(filename):
+  if os.path.isfile(filename) and not OVERWRITE:
     # already got these results
-#    return
+    return
 
   f = open(filename, 'w')
   wr = csv.writer(f, quoting=csv.QUOTE_ALL)
   wr.writerow(csvheader)
 
   for key, candidate in sentence_group.iteritems():
-#    if key != 'b':
-    name = 'Antecedent' if key == actual_antecedent_key else key
-    results = sentence_similarity.compare_sentences(anaphor, candidate)
-    wr.writerow([name] + results)
+    if key != 'b' or actual_antecedent_key == 'b':
+      name = 'Antecedent' if key == actual_antecedent_key else key
+      results = sentence_similarity.compare_sentences(anaphor, candidate)
+      wr.writerow([name] + results)
 
   if PRINT:
     print 'ANAPHOR'
@@ -81,27 +82,13 @@ def get_anaphor_category(anaphor):
 
 
 if __name__ == '__main__':
-  
-  mod = 0
-
   candidate_source = util.load_pickle('candidate_source.dump')
   crowd_results = util.load_pickle('crowd_results.dump')
   for key in candidate_source:
-    if key.isdigit():
-      if int(key) % 3 == mod: 
-        try:
-          get_comparison_results(candidate_source[key], crowd_results[key][1],
-                                 key)
-        except KeyError:
-          # crowd_results has fewer identifiers than candidate_source because
-          # annotators did not agree on the antecedents for some ids
-          pass
-    elif mod == 0: # some keys aren't ints ie G30
-      try:
-        get_comparison_results(candidate_source[key], crowd_results[key][1],
-                               key)
-      except KeyError:
-        # crowd_results has fewer identifiers than candidate_source because
-        # annotators did not agree on the antecedents for some ids
-        pass
-
+    try:
+      get_comparison_results(candidate_source[key], crowd_results[key][1],
+                             key)
+    except KeyError:
+      # crowd_results has fewer identifiers than candidate_source because
+      # annotators did not agree on the antecedents for some ids
+      pass
