@@ -22,6 +22,9 @@ def compare_sentences(sentence1, sentence2):
 
   Returns:
     A list of similarity scores.
+    Order is: noun_path, noun_lch, noun_wup, noun_res, noun_jcn, noun_lin,
+    noun_lesk, noun_vector, verb_path, verb_lch, verb_wup, verb_res,
+    verb_jcn, verb_lin, verb_lesk, verb_vector, word2vec, [LSA]
   '''
   if PRINT:
     print 'Sentence 1: %s' % sentence1
