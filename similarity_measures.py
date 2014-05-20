@@ -104,10 +104,10 @@ def wn_similarity(synset1, synset2, measure):
     return min(1, scale*getattr(synset1, similarity_function)(synset2))
 
 
-#TODO: change name, check for valid return values
-def lesk_similarity(sim_type, synset1, synset2):
-  '''Returns a score denoting how similar 2 word senses are based on Adapted
-  Lesk.
+def perl_similarity(sim_type, synset1, synset2):
+  '''Returns a score denoting how similar 2 word senses are based on perl's
+    WordNet::Similarity package. Either Adapted Lesk or Vector. Make sure
+    server.pm is running.
 
   Args:
     sim_type: A string, either "lesk" or "vector".

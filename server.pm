@@ -1,6 +1,7 @@
 #!perl
 
 # Server for perl WordNet::Similarity queries
+# to run: `perl server.pm`
 
 use strict;
 use warnings;
