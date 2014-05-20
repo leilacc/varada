@@ -1,5 +1,7 @@
 Calculates sentence similarity scores.
 
+***************COMPARING SENTENCES******************
+
 The basic function is compare_sentences in sentence_similarity.py. This
 takes two unicode sentences and returns a list of various similarity scores.
 The order of the scores is: noun_path, noun_lch, noun_wup, noun_res,
@@ -9,3 +11,36 @@ verb_res, verb_jcn, verb_lin, verb_lesk, verb_vector, word2vec, [LSA]
 LSA is not currently included because it is extremely slow. It can be
 re-added by uncommenting the LSA lines in compare_sentences as well as lines
 21 and 22 in similarity_measures.py.
+
+compare_sentences relies (directly or indirectly) on nltk,
+stanford-postagger, lesk.conf, lsa_init.py, sentence_to_synset.py,
+server.pm, similarity_measures.py, stanford_tagger.pyc, tag.py, and
+word2vec.py.
+
+Before compare_sentences is run, server.pm must be started using the
+command `perl server.pm`. This allows Lesk and vector WordNet similarity
+scores to be calculated efficiently using perl's WordNet::Similarity package.
+
+
+***************ANAPHORS AND ANTECEDENTS******************
+
+For the purpose of calculating similarity scores between anaphors and
+potential antecedents, ana_ante_sim.py is run. It calls compare_sentences
+using anaphor and antecedent data in .dump files. Similarity results
+for each anaphor/candidate antecedents group are saved in .csv files.
+Each .csv file is named for the group's key, and placed in a subdirectory
+of results/ named for the anaphor's shell noun.
+
+After running ana_ante_sim.py to calculate each similarity score, run
+get_averages.py to calculate the average similarity score between a
+candidate sentence and the anaphor. ana_ante_sim is quite slow since each
+compare_sentences call takes ~1 min. However get_averages takes <1 min total.
+
+
+***************TROUBLESHOOTING******************
+
+-make sure you are on broca, where most packages are installed
+-make sure you have run `perl server.pm`
+-make sure WNHOME is set: `export WNHOME=/p/cl/wordnet2.0/`
+-make sure you are using perl packages that were installed locally
+ `export PERL5LIB=$PERL5LIB:/u/leila/perl5/lib/perl:/u/leila/perl5/lib/perl5:/u/leila/perl5/share/perl:/u/leila/perl5/lib/perl/share/perl`

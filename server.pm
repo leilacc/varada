@@ -1,4 +1,7 @@
 #!perl
+
+# Server for perl WordNet::Similarity queries
+
 use strict;
 use warnings;
 
