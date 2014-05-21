@@ -10,7 +10,11 @@ verb_res, verb_jcn, verb_lin, verb_lesk, verb_vector, word2vec, [LSA]
 
 LSA is not currently included because it is extremely slow. It can be
 re-added by uncommenting the LSA lines in compare_sentences as well as lines
-21 and 22 in similarity_measures.py.
+21 and 22 in similarity_measures.py. Different corpuses can be downloaded
+by following the first two steps at
+http://radimrehurek.com/gensim/wiki.html#latent-sematic-analysis and
+changing the file path on line 22 in similarity_measures where the LSA model
+is loaded.
 
 compare_sentences relies (directly or indirectly) on nltk,
 stanford-postagger, lesk.conf, lsa_init.py, sentence_to_synset.py,
@@ -35,6 +39,8 @@ After running ana_ante_sim.py to calculate each similarity score, run
 get_averages.py to calculate the average similarity score between a
 candidate sentence and the anaphor. ana_ante_sim is quite slow since each
 compare_sentences call takes ~1 min. However get_averages takes <1 min total.
+
+Simple analysis of the results is done using analyze.py.
 
 
 ***************TROUBLESHOOTING******************
