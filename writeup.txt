@@ -1,82 +1,9 @@
-I investigated whether there is a difference in semantic similarity between an anaphor and its antecedent and other nearby sentences, and if semantic similarity can be used to determine an anaphor’s antecedent from a group of candidate sentences. Sentence similarity was calculated between pairs of sentences by combining scores for various WordNet similarity measures between nouns and between verbs in each sentence, as well as Google’s word2vec. 
-
-It was found that the antecedent typically had greater semantic similarity to the anaphor than other close preceding sentences. The average for antecedents was 0.5497 compared to 0.4301 for other candidates (scored on a [0, 1] scale) and a t-test gives p < 0.00001. The results are similar for each shell noun taken separately. The data includes roughly 300 cases where the anaphor and antecedent occur in the same sentence, which obviously results in a very high similarity score for the antecedent, but removing these cases still gives similar results (average similarity score of 0.4862 for antecedents and 0.4266 for other candidates, p < 0.00001).
-
-In the dataset that was used, between 1 and 4 potential antecedent sentences (candidates) were given. 49.04% of the time the actual antecedent was the most similar sentence to the anaphor (42.66% ignoring cases where the anaphor and antecedent occur in the same sentence); the remainder of the time it was another candidate. Given that most anaphors had more than 2 candidates, this represents an improvement over chance for determining the antecedent from the pool of candidates.
-
-Antecedents with very low semantic similarity scores to their anaphors (< 0.15) were almost all short questions with anaphors that expanded upon them in some detail. For example, the antecedent “Now what?” and the anaphor “This question may have particular resonance at the moment for Miss Lipinski, who at 15 is the youngest Olympic champion in the history of figure skating, and the many other athletes who recently left Nagano in triumph.” with score 0.0132. Antecedents with very high semantic similarity scores to their anaphors 
-
-
-Regular results
-
-Total ante mean: 0.549720
-Total candidate mean: 0.430089
-Total ante first: 1094 (0.490363)
-Total candidate first: 1137 (0.509637)
-Total ante last: 354 (0.156915)
-Total candidate last: 1902 (0.843085)
-ttest ante-cand scores: 30.574284, 0.000000
-
-
-No ‘b’ ante (~323 cases)
-
-Total ante mean: 0.486236
-Total candidate mean: 0.426590
-Total ante first: 771 (0.404088)
-Total candidate first: 1137 (0.595912)
-Total ante last: 354 (0.183135)
-Total candidate last: 1579 (0.816865)
-ttest ante-cand scores: 15.717944, 0.000000
-
-Least similar antecedents:
-
-1. Now what? (0.013188912563672476) 2482
-
-Anaphor: This question may have particular resonance at the moment for Miss Lipinski, who at 15 is the youngest Olympic champion in the history of figure skating, and the many other athletes who recently left Nagano in triumph.
-
-2. Not irrefutably, not yet. (0.013196707141664894) 757
-
-Anaphor: For this reason alone -- and add his back-to-back M.V.P. titles in 1960 and '61 as a bonus -- Maris should be inducted into the Hall of Fame.
-
-3. And what then? (0.015165144592065298) 2337
-
-Anaphor: I put this question to the head of the Commission of Fine Arts in Washington a few weeks ago as the finishing touches were being applied to the landscape.
-
-4. What about Tudjman? (0.016524408555675503) 2599
-
-Anaphor: This question comes to mind after the long overdue indictment of Slobodan Milosevic, the President of Yugoslavia and the prime villain behind the carnage that has engulfed the Balkans for the past decade.
-
-5. So who will pay for all this? (0.023364479680009473) 2349
-
-Anaphor: Researchers at I.B.M. have considered this question and responded with an interesting business case: it may well pay for the auto companies themselves to foot the bill.
-
-
-
-
-Most similar antecedents: (without antecedents that are anaphors)
-
-1. If a state agency disagrees with a decision made by the new office, an appeal could be taken to the Governor, who would apparently hire new staff to review such matters. (0.8831415316075925) 1316
-
-Anaphor: This issue is hardly new.
-
-2. Finally, the fact that I appeared in Woody Allen's film ''Crimes and Misdemeanors'' and that he gave me a chance to express ideas that were parts of my two books seems to have shocked my reviewer. (0.8486454551314755) 863
-
-Anaphor: But is this reason enough not to mention the central idea of my book?
-
-3. Question 1 on the short form asks, ''How many people were living or staying in this house, apartment or mobile home on April 1, 2000?” (0.8423171934029176) G159
-
-Anaphor: This question could only be answered on or after April 1.
-
-4. Now, once again, just as I asked the question in reference to Ms. Lewinsky, it appears to me that this is an extraordinary question to ask the President of the United States. (0.8418570287241431) 2219
-
-Anaphor: What led you to ask this question to the President?
-
-5. The independent counsel shall have jurisdiction and authority to investigate to the maximum extent authorized by the Independent Counsel Reauthorization Act of 1994 whether Bruce Edward Babbitt, Secretary of the Interior, committed a violation of any Federal criminal law, other than a Class B or C misdemeanor or infraction, by making false statements during the course of Congressional testimony concerning a decision by the Department of Interior to deny an application by three Indian tribes to take land into trust in Hudson, Wis., for an off-reservation gambling casino or conspiring with others to do so. (0.8277292646489388) 1660
-
-Anaphor: To the extent necessary to resolve the allegations that Secretary Babbitt made false statements concerning this decision by the Department of the Interior, the independent counsel shall have jurisdiction and authority to investigate the decision itself to determine whether any violation of Federal criminal law occurred in connection with the Department of Interior's consideration of the application.
-
-
-Most similar antecedents: (with antecedents that are anaphors)
-
-
+I investigated whether there is a difference in the level of semantic similarity
+of the sentence containing an anaphor and the sentence containing its
+antecedent, and the anaphor sentence and other nearby sentences. The purpose was
+to see if semantic similarity can be used to determine the sentence containing
+an anaphor’s antecedent from a group of candidate sentences. Sentence similarity
+was calculated between pairs of sentences by combining scores for various
+WordNet similarity measures between nouns and between verbs in each sentence, as
+well as Google’s word2vec using the large Google News model.
 
