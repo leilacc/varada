@@ -5,6 +5,7 @@ import os
 import csv
 import numpy as np
 import util
+from scipy import stats
 
 total_ante_score = []
 total_cand_score = []
@@ -12,13 +13,14 @@ total_ante_first = 0
 total_cand_first = 0
 total_ante_last = 0
 total_cand_last = 0
+antecedents = []
 
 sim = -1 # Index of similarity score to use
 
 candidate_source = util.load_pickle('candidate_source.dump')
 crowd_results = util.load_pickle('crowd_results.dump')
 
-for dirpath, dirnames, filenames in os.walk('/u/leila/sensim/results'):
+for dirpath, dirnames, filenames in os.walk('results'):
   if dirpath.split('/')[-1] == 'results':
     continue
 
@@ -45,13 +47,13 @@ for dirpath, dirnames, filenames in os.walk('/u/leila/sensim/results'):
     for i, line in enumerate(lines):
       if line[0] == 'Antecedent':
         ante_score.append(line[sim])
+        key = filename.split('.')[0]
+
+        antecedents.append([key, line[sim]])
         if i == 0:
           ante_last += 1
-
-
         elif i == len(lines) - 1:
           ante_first += 1
-          key = filename.split('.')[0]
           print '---------------------------------------------------------'
           print 'Anaphor: %s' % (candidate_source[key]['b'])
           print '-----'
@@ -104,3 +106,13 @@ print 'Total ante first: %d (%f)' % (mean_a_f, p_a_f)
 print 'Total candidate first: %d (%f)' % (mean_c_f, p_c_f)
 print 'Total ante last: %d (%f)' % (mean_a_l, p_a_l)
 print 'Total candidate last: %d (%f)' % (mean_c_l, p_c_l)
+print 'ttest ante-cand scores: %f, %f' % stats.ttest_ind(total_ante_score, total_cand_score)
+
+num_a1 = 0
+for key in crowd_results:
+  if crowd_results[key][1] == 'a1':
+      num_a1 += 1
+print num_a1
+
+antecedents.sort(key=operator.itemgetter(-1))
+print antecedents
