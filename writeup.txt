@@ -7,3 +7,54 @@ was calculated between pairs of sentences by combining scores for various
 WordNet similarity measures between nouns and between verbs in each sentence, as
 well as Google’s word2vec using the large Google News model.
 
+It was hypothesized that anaphors are used to change topics and move the
+discourse forward, and so the semantic similarity of the anaphor and antecedent
+sentences would be low.
+
+However, it was found that the antecedent sentence typically had greater
+semantic similarity to the anaphor sentence than other close preceding
+sentences. The average for antecedent sentences was 0.5497 compared to 0.4301
+for other candidates (scored on a [0, 1] scale) and a t-test gives p < 0.00001,
+  so the difference is significant. The results are similar for each shell noun
+  taken separately. The data includes roughly 300 cases where the anaphor and
+  antecedent occur in the same sentence, which obviously results in a very high
+  similarity score between the antecedent and anaphor sentences, but removing
+  these cases still gives similar results (average similarity score of 0.4862
+  for antecedent sentences and 0.4266 for other candidates, p < 0.00001).
+
+    In the dataset that was used, between 1 and 4 potential antecedent sentences
+    (candidates) were given. 49.04% of the time the sentence containing the
+    actual antecedent was the most similar sentence to the sentence containing
+    the anaphor (42.66% ignoring cases where the anaphor and antecedent occur in
+    the same sentence); the remainder of the time it was another candidate
+    sentence. Given that most anaphors had more than 2 candidates, this
+    represents an improvement over chance for determining the antecedent
+    sentence from the pool of candidates. Conversely, the antecedent sentence
+    was ranked least similar to the anaphor sentence only 15.69% of the time
+    (all cases) and 18.31% of the time (ignoring cases where the anaphor
+    sentence is the same as the antecedent sentence).
+
+    Antecedent sentences with very low semantic similarity scores to their
+    anaphor sentences (< 0.15) were almost all short questions with anaphor
+    sentences that expanded upon them in some detail. For example, the
+    antecedent sentence “Now what?” and the anaphor sentence “This question may
+    have particular resonance at the moment for Miss Lipinski, who at 15 is the
+    youngest Olympic champion in the history of figure skating, and the many
+    other athletes who recently left Nagano in triumph.” with score 0.0132.
+    Antecedent sentences with very high semantic similarity scores to their
+    anaphor sentences (excluding those where the antecedent and anaphor sentence
+    were the same) were longer, and the anaphor sentences did not segue much if
+    at all into other topics. For example, the antecedent sentence “Now, once
+    again, just as I asked the question in reference to Ms. Lewinsky, it appears
+    to me that this is an extraordinary question to ask the President of the
+    United States.” and anaphor sentence “What led you to ask this question to
+    the President?” with score 0.8419.
+
+    There are several limitations to the approach that was used. First, only
+    verbs and nouns were considered for all the WordNet similarity measures,
+    ignoring potentially useful information in other words in the sentence such
+    as adjectives. Also, the length of the sentence (the number of nouns and
+    verbs it contains) affects the similarity score, since the similarities
+    between words are averaged to generate the sentence similarity. Finally, all
+    the sentences used were from a news source, so the results may not apply to
+    other genres.
